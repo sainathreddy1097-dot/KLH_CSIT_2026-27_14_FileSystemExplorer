@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dining Philosophers – Deadlock Prevention System</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Font Awesome / Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+        <div class="header-left">
+            <div class="logo-icon"><i class="fa-solid fa-utensils"></i></div>
+            <div class="header-titles">
+                <h1>Dining Philosophers Problem</h1>
+                <span class="subtitle">Operating Systems Synchronization &amp; Deadlock Prevention Engine</span>
+            </div>
+        </div>
+        <div class="header-center">
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-tab="tab-dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</button>
+                <button class="nav-tab" data-tab="tab-algorithm"><i class="fa-solid fa-microchip"></i> Algorithm &amp; Proof</button>
+                <button class="nav-tab" data-tab="tab-deadlock"><i class="fa-solid fa-shield-halved"></i> Deadlock Analysis</button>
+                <button class="nav-tab" data-tab="tab-statistics"><i class="fa-solid fa-chart-line"></i> Live Statistics</button>
+                <button class="nav-tab" data-tab="tab-tests"><i class="fa-solid fa-vial-circle-check"></i> Test Suite</button>
+                <button class="nav-tab" data-tab="tab-viva"><i class="fa-solid fa-graduation-cap"></i> Viva Guide</button>
+            </nav>
+        </div>
+        <div class="header-right">
+            <span class="engine-indicator badge-c-engine" id="engineStatusBadge">
+                <span class="pulse-dot"></span> C Engine: Connected
+            </span>
+            <button id="themeToggleBtn" class="icon-btn" title="Toggle Theme">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main App Container -->
+    <main class="app-main">
+        <!-- TAB 1: DASHBOARD & LIVE SIMULATION -->
+        <section id="tab-dashboard" class="tab-content active">
+            <!-- Controls Bar -->
+            <div class="control-panel card">
+                <div class="control-row">
+                    <div class="control-group">
+                        <label for="strategySelect"><i class="fa-solid fa-diagram-project"></i> Synchronization Strategy:</label>
+                        <select id="strategySelect" class="form-select">
+                            <option value="0">Deadlock Prevention (N-1 Counting Semaphore)</option>
+                            <option value="1">Unsafe Demo (Hold &amp; Wait Circular Deadlock)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="numPhilosophers"><i class="fa-solid fa-users"></i> Philosophers (N):</label>
+                        <select id="numPhilosophers" class="form-select">
+                            <option value="3">3 Philosophers (2 Permits)</option>
+                            <option value="4">4 Philosophers (3 Permits)</option>
+                            <option value="5" selected>5 Philosophers (4 Permits - Standard)</option>
+                            <option value="6">6 Philosophers (5 Permits)</option>
+                            <option value="7">7 Philosophers (6 Permits)</option>
+                            <option value="8">8 Philosophers (7 Permits)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="maxMealsInput"><i class="fa-solid fa-bowl-food"></i> Target Meals:</label>
+                        <input type="number" id="maxMealsInput" min="1" max="50" value="5" class="form-input" style="width: 75px;">
+                    </div>
+
+                    <div class="control-group speed-group">
+                        <label for="speedSlider"><i class="fa-solid fa-gauge"></i> Delay: <span id="speedValue">600</span>ms</label>
+                        <input type="range" id="speedSlider" min="100" max="1500" step="50" value="600" class="form-range">
+                    </div>
+
+                    <div class="control-actions">
+                        <button id="startBtn" class="btn btn-primary"><i class="fa-solid fa-play"></i> Start</button>
+                        <button id="pauseBtn" class="btn btn-warning" disabled><i class="fa-solid fa-pause"></i> Pause</button>
+                        <button id="resumeBtn" class="btn btn-info" style="display: none;"><i class="fa-solid fa-play"></i> Resume</button>
+                        <button id="stepBtn" class="btn btn-secondary" disabled><i class="fa-solid fa-forward-step"></i> Step</button>
+                        <button id="resetBtn" class="btn btn-danger"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulation Status Highlights -->
+            <div class="status-cards-grid">
+                <div class="stat-card">
+                    <div class="stat-icon thinking-icon"><i class="fa-solid fa-brain"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-title">Thinking</span>
+                        <span class="stat-value" id="countThinking">5</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon hungry-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-title">Hungry / Waiting</span>
+                        <span class="stat-value" id="countHungry">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon eating-icon"><i class="fa-solid fa-utensils"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-title">Eating Now</span>
+                        <span class="stat-value" id="countEating">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon permits-icon"><i class="fa-solid fa-ticket"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-title">Semaphore Permits</span>
+                        <span class="stat-value" id="countPermits">4 / 4</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon safety-icon" id="safetyCardIcon"><i class="fa-solid fa-shield-check"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-title">Deadlock Status</span>
+                        <span class="stat-value status-safe" id="deadlockStatusText">SAFE (Prevented)</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon steps-icon"><i class="fa-solid fa-stopwatch"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-title">Runtime &amp; Steps</span>
+                        <span class="stat-value" id="runtimeStepsText">0.0s | 0 steps</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulation Workspace Layout -->
+            <div class="workspace-layout">
+                <!-- Left: Circular Table Visualization -->
+                <div class="table-container card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-circle-notch"></i> Dining Table Concurrency Arena</h2>
+                        <div class="table-legend">
+                            <span class="legend-item"><span class="color-dot dot-thinking"></span> Thinking</span>
+                            <span class="legend-item"><span class="color-dot dot-hungry"></span> Hungry</span>
+                            <span class="legend-item"><span class="color-dot dot-eating"></span> Eating</span>
+                            <span class="legend-item"><span class="color-dot dot-deadlocked"></span> Deadlocked</span>
+                            <span class="legend-item"><span class="color-dot dot-fork-free"></span> Fork Free</span>
+                            <span class="legend-item"><span class="color-dot dot-fork-held"></span> Fork Held</span>
+                        </div>
+                    </div>
+
+                    <div class="simulation-stage-wrapper">
+                        <div id="deadlockBanner" class="deadlock-alert-banner" style="display: none;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <div>
+                                <strong>CIRCULAR WAIT DEADLOCK OCCURRED!</strong>
+                                <p>All philosophers picked their left fork and are indefinitely blocked waiting for the right fork. Watchdog timer activated.</p>
+                            </div>
+                        </div>
+
+                        <!-- Circular Table Canvas / SVG -->
+                        <div class="circular-arena" id="circularArena">
+                            <div class="center-table">
+                                <div class="table-plate-art">
+                                    <i class="fa-solid fa-spaghetti-monster-flying"></i>
+                                    <span>Shared Dining Table</span>
+                                    <small id="centerTableMode">N-1 Semaphore: 4 Permits</small>
+                                </div>
+                            </div>
+                            <!-- Dynamic Philosophers & Forks generated by JavaScript -->
+                            <div id="philosophersContainer"></div>
+                            <div id="forksContainer"></div>
+                        </div>
+                    </div>
+
+                    <div class="table-footer-info">
+                        <span id="strategyExplanation">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <strong>Active Mechanism:</strong> Counting semaphore initialized to <em>N - 1 = 4</em> permits breaks the circular-wait condition by allowing at most 4 philosophers to compete for forks simultaneously.
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Right: Real-time Event Log & State Details -->
+                <div class="log-container card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-list-check"></i> Live POSIX C Event Stream</h2>
+                        <div class="log-actions">
+                            <select id="logFilterPhil" class="form-select form-select-sm">
+                                <option value="all">All Philosophers</option>
+                            </select>
+                            <select id="logFilterType" class="form-select form-select-sm">
+                                <option value="all">All Event Types</option>
+                                <option value="STATE_CHANGE">State Changes</option>
+                                <option value="PERMIT">Permits</option>
+                                <option value="FORK">Forks</option>
+                                <option value="DEADLOCK">Deadlocks</option>
+                            </select>
+                            <button id="clearLogBtn" class="btn btn-sm btn-outline" title="Clear Log"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="log-stream-window" id="logStreamWindow">
+                        <div class="empty-log-placeholder" id="emptyLogPlaceholder">
+                            <i class="fa-solid fa-terminal"></i>
+                            <p>Simulation idle. Click <strong>Start</strong> to launch POSIX threads and stream real-time synchronization events.</p>
+                        </div>
+                    </div>
+
+                    <div class="log-footer">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="autoScrollLog" checked> Auto-scroll event stream
+                        </label>
+                        <span class="event-counter" id="eventCounterText">0 events recorded</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: ALGORITHM & PROOF -->
+        <section id="tab-algorithm" class="tab-content">
+            <div class="content-wrapper card">
+                <h2><i class="fa-solid fa-calculator"></i> The Dining Philosophers Algorithm &amp; Mathematical Proof</h2>
+                <div class="theory-grid">
+                    <div class="theory-card">
+                        <h3>1. Classical Problem Formulation</h3>
+                        <p>Formulated by Edsger Dijkstra in 1965, the Dining Philosophers problem models resource allocation among concurrent processes:</p>
+                        <ul>
+                            <li>$N$ philosophers sit around a circular table.</li>
+                            <li>$N$ forks are placed between each adjacent pair.</li>
+                            <li>Each philosopher requires <strong>both adjacent forks</strong> ($F_i$ and $F_{(i+1) \pmod N}$) to eat.</li>
+                            <li>Without disciplined synchronization, if every philosopher picks up their left fork simultaneously, each holds one fork while waiting for the other. This creates a circular dependency resulting in <strong>deadlock</strong>.</li>
+                        </ul>
+                    </div>
+
+                    <div class="theory-card">
+                        <h3>2. The N - 1 Semaphore Prevention Strategy</h3>
+                        <p>Our implementation enforces deadlock prevention by restricting concurrency using a POSIX counting semaphore:</p>
+                        <pre><code>sem_init(&permit_semaphore, 0, N - 1); // 4 permits for N=5</code></pre>
+                        <p><strong>Step-by-step Execution:</strong></p>
+                        <ol>
+                            <li>Philosopher $P_i$ becomes hungry.</li>
+                            <li>$P_i$ executes <code>sem_wait(&permit_semaphore)</code> to acquire an entry permit.</li>
+                            <li>Only at most $N-1$ philosophers can enter the dining room simultaneously.</li>
+                            <li>$P_i$ acquires left fork mutex: <code>pthread_mutex_lock(&forks[i])</code>.</li>
+                            <li>$P_i$ acquires right fork mutex: <code>pthread_mutex_lock(&forks[(i+1)%N])</code>.</li>
+                            <li>$P_i$ eats, then releases both fork mutexes.</li>
+                            <li>$P_i$ executes <code>sem_post(&permit_semaphore)</code> to return the permit.</li>
+                        </ol>
+                    </div>
+
+                    <div class="theory-card">
+                        <h3>3. Formal Mathematical Proof of Deadlock Freedom</h3>
+                        <div class="proof-box">
+                            <p><strong>Theorem:</strong> Limiting simultaneous dining attempts to at most $N - 1$ philosophers guarantees deadlock prevention.</p>
+                            <p><strong>Proof by Contradiction:</strong></p>
+                            <ol>
+                                <li>Suppose a deadlock occurs. In a deadlock state, every philosopher competing for forks must be holding one fork and waiting for another.</li>
+                                <li>Since each philosopher holds exactly one fork, $k$ philosophers hold exactly $k$ forks.</li>
+                                <li>By construction, the counting semaphore permits at most $k \le N - 1$ philosophers to compete for forks.</li>
+                                <li>Therefore, the total number of forks held by these competing philosophers is at most $N - 1$.</li>
+                                <li>There are $N$ total forks on the table. Since at most $N - 1$ forks are held, at least one fork $F_{\text{free}}$ must remain unheld on the table ($N - (N - 1) = 1$).</li>
+                                <li>The unheld fork is adjacent to at least one of the competing philosophers. That philosopher can acquire the fork, finish eating, and release both forks.</li>
+                                <li>This contradicts the assumption that all philosophers are permanently blocked. Hence, deadlock is impossible. $\blacksquare$</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="theory-card">
+                        <h3>4. Concurrency Primitives Used in C Engine</h3>
+                        <table class="concept-table">
+                            <thead>
+                                <tr>
+                                    <th>Primitive</th>
+                                    <th>POSIX Type</th>
+                                    <th>Purpose in Engine</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Threads</strong></td>
+                                    <td><code>pthread_t</code></td>
+                                    <td>Simulates independent concurrent philosophers.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Mutexes</strong></td>
+                                    <td><code>pthread_mutex_t</code></td>
+                                    <td>Ensures strict mutual exclusion on each individual fork.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Counting Semaphore</strong></td>
+                                    <td><code>sem_t</code></td>
+                                    <td>Restricts room entry to at most $N-1$ philosophers.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Condition Variables</strong></td>
+                                    <td><code>pthread_cond_t</code></td>
+                                    <td>Enables clean, responsive pause, resume, and single-step without busy waiting.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Thread Barrier</strong></td>
+                                    <td><code>pthread_barrier_t</code></td>
+                                    <td>Used in Unsafe mode to deterministically align threads for circular wait demonstration.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: DEADLOCK ANALYSIS -->
+        <section id="tab-deadlock" class="tab-content">
+            <div class="content-wrapper card">
+                <h2><i class="fa-solid fa-shield-halved"></i> Coffman's Four Necessary Conditions &amp; Prevention Analysis</h2>
+                <p>For a deadlock to occur, all four Coffman conditions must hold simultaneously. Eliminating even one condition renders deadlock impossible.</p>
+
+                <div class="coffman-grid">
+                    <div class="coffman-card condition-satisfied">
+                        <div class="coffman-header">
+                            <span class="cond-num">1</span>
+                            <h4>Mutual Exclusion</h4>
+                            <span class="cond-tag tag-present">Present</span>
+                        </div>
+                        <p>Each fork can only be held by one philosopher at any given instant. Modeled by <code>pthread_mutex_t fork_mutexes[i]</code>.</p>
+                        <div class="prevention-note">
+                            <strong>Can we eliminate this?</strong> No. Physical forks cannot be concurrently shared while eating.
+                        </div>
+                    </div>
+
+                    <div class="coffman-card condition-satisfied">
+                        <div class="coffman-header">
+                            <span class="cond-num">2</span>
+                            <h4>Hold and Wait</h4>
+                            <span class="cond-tag tag-present">Present</span>
+                        </div>
+                        <p>A philosopher holds their left fork while waiting for the right fork to become available.</p>
+                        <div class="prevention-note">
+                            <strong>Alternative approach:</strong> A philosopher could acquire both forks simultaneously or none (using trylock or atomic pair acquisition).
+                        </div>
+                    </div>
+
+                    <div class="coffman-card condition-satisfied">
+                        <div class="coffman-header">
+                            <span class="cond-num">3</span>
+                            <h4>No Preemption</h4>
+                            <span class="cond-tag tag-present">Present</span>
+                        </div>
+                        <p>A fork cannot be forcibly confiscated from a philosopher; it must be voluntarily released after eating completes.</p>
+                        <div class="prevention-note">
+                            <strong>Can we eliminate this?</strong> Preemption in mutex locks could corrupt shared memory state or cause race conditions.
+                        </div>
+                    </div>
+
+                    <div class="coffman-card condition-broken">
+                        <div class="coffman-header">
+                            <span class="cond-num">4</span>
+                            <h4>Circular Wait</h4>
+                            <span class="cond-tag tag-broken">BROKEN BY N-1 SEMAPHORE</span>
+                        </div>
+                        <p>A closed loop of dependencies exists: $P_0 \to F_1 \to P_1 \to F_2 \to P_2 \dots \to F_0 \to P_0$.</p>
+                        <div class="prevention-note highlight-success">
+                            <strong>Our Prevention Mechanism:</strong> The counting semaphore limits diners to $N-1$, ensuring at least one fork is always free to satisfy the remaining request. This definitively breaks the cycle!
+                        </div>
+                    </div>
+                </div>
+
+                <div class="comparison-container">
+                    <h3>Deadlock Prevention vs. Avoidance vs. Detection</h3>
+                    <div class="table-responsive">
+                        <table class="concept-table">
+                            <thead>
+                                <tr>
+                                    <th>Criteria</th>
+                                    <th>Deadlock Prevention (This Project)</th>
+                                    <th>Deadlock Avoidance (Banker's Algorithm)</th>
+                                    <th>Deadlock Detection &amp; Recovery</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Core Principle</strong></td>
+                                    <td>Structurally eliminate one of Coffman's 4 conditions beforehand.</td>
+                                    <td>Dynamically inspect resource requests to ensure safe state transitions.</td>
+                                    <td>Allow deadlocks to occur, periodically detect cycles, and abort/preempt.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Overhead</strong></td>
+                                    <td>Very low; simple counting semaphore decrements/increments.</td>
+                                    <td>High; requires priori knowledge of maximum resource demands ($O(m \times n^2)$).</td>
+                                    <td>High; requires maintaining wait-for graph and expensive recovery rollbacks.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Resource Utilization</strong></td>
+                                    <td>Conservative (at most $N-1$ compete).</td>
+                                    <td>Moderate; only requests leading to safe states granted.</td>
+                                    <td>High initial utilization, but recovery is costly and disruptive.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Suitability</strong></td>
+                                    <td>Ideal for fixed resource hierarchies and embedded systems.</td>
+                                    <td>Practical for batch processing systems with known limits.</td>
+                                    <td>Standard in database management systems (DBMS) with transaction aborts.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: STATISTICS & CHARTS -->
+        <section id="tab-statistics" class="tab-content">
+            <div class="content-wrapper card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-chart-pie"></i> Real-Time Simulation Analytics</h2>
+                    <span class="badge badge-primary">Calculated from Real C Engine Events</span>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Meals Completed Per Philosopher</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="mealsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <h3>Cumulative Waiting Time (ms)</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="waitChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-table-container">
+                    <h3>Detailed Resource Utilization &amp; Fairness Metrics</h3>
+                    <table class="concept-table" id="statsDetailTable">
+                        <thead>
+                            <tr>
+                                <th>Philosopher</th>
+                                <th>Current State</th>
+                                <th>Meals Eaten</th>
+                                <th>Total Wait Time</th>
+                                <th>Avg Wait / Meal</th>
+                                <th>Forks Currently Held</th>
+                                <th>Acquisition Count</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statsTableBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: AUTOMATED TEST SUITE -->
+        <section id="tab-tests" class="tab-content">
+            <div class="content-wrapper card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-vial-circle-check"></i> 10-Scenario Automated Test Harness</h2>
+                    <button id="runTestsBtn" class="btn btn-primary btn-sm"><i class="fa-solid fa-rotate"></i> Re-run Automated Tests</button>
+                </div>
+                <p>All 10 required synchronization invariants and boundary scenarios are tested directly against the compiled C binary (<code>tests/test_suite.c</code>):</p>
+
+                <div class="test-results-list" id="testResultsList">
+                    <div class="test-card test-pass">
+                        <div class="test-status-badge"><i class="fa-solid fa-check-circle"></i> PASS</div>
+                        <div class="test-info">
+                            <h4>Test 1: Normal Execution</h4>
+                            <p>All philosopher threads start and successfully complete their configured meal limits.</p>
+                        </div>
+                    </div>
+                    <div class="test-card test-pass">
+                        <div class="test-status-badge"><i class="fa-solid fa-check-circle"></i> PASS</div>
+                        <div class="test-info">
+                            <h4>Test 2: Deadlock Prevention</h4>
+                            <p>System completes full meal cycles with 0 deadlocks under the N-1 counting semaphore strategy.</p>
+                        </div>
+                    </div>
+                    <div class="test-card test-pass">
+                        <div class="test-status-badge"><i class="fa-solid fa-check-circle"></i> PASS</div>
+                        <div class="test-info">
+                            <h4>Test 3: Mutual Exclusion Invariant</h4>
+                            <p>Continuous monitoring confirms no fork is held by two philosophers simultaneously at any point.</p>
+                        </div>
+                    </div>
+                    <div class="test-card test-pass">
+                        <div class="test-status-badge"><i class="fa-solid fa-check-circle"></i> PASS</div>
+                        <div class="test-info">
+                            <h4>Test 4: Resource Release Invariant</h4>
+                            <p>Both fork mutexes and the semaphore permit are verified to be fully released after eating.</p>
+                        </div>
+                    </div>
+                    <div class="test-card test-pass">
+                        <div class="test-status-badge"><i class="fa-solid fa-check-circle"></i> PASS</div>
+                        <div class="test-info">
+                            <h4>Test 5: Repeated Simulation</h4>
+                            <p>Multiple consecutive runs complete without stale mutex locks, thread leaks, or semaphore corruption.</p>
+                        </div>
+                    </div>
+                    <div class="test-card test-pass">
+                        <div class="test-status-badge"><i class="fa-solid fa-check-circle"></i> PASS</div>
+                        <div class="test-info">
+                            <h4>Test 6: Invalid Configuration Handling</h4>
+                            <p>Rejects invalid philosopher counts (N &lt; 2 or N &gt; 10) and meal limits &lt; 1 gracefully with error codes.</p>
+                        </div>
+                    </div>
+                    <div class="test-card test-pass">
+                        <div class="test-status-badge"><i class="fa-solid fa-check-circle"></i> PASS</div>
+                        <div class="test-info">
+                            <h4>Test 7: Unsafe Scenario Demonstration</h4>
+                            <p>Controlled circular wait demo triggers deadlock detection watchdog without hanging process or freezing UI.</p>
+                        </div>
+                    </div>
+                    <div class="test-card test-pass">
+                        <div class="test-status-badge"><i class="fa-solid fa-check-circle"></i> PASS</div>
+                        <div class="test-info">
+                            <h4>Test 8: Concurrent Activity</h4>
+                            <p>Confirms that multiple non-adjacent philosophers (e.g. P0 and P2) eat concurrently without contention.</p>
+                        </div>
+                    </div>
+                    <div class="test-card test-pass">
+                        <div class="test-status-badge"><i class="fa-solid fa-check-circle"></i> PASS</div>
+                        <div class="test-info">
+                            <h4>Test 9: Fast Clean Shutdown &amp; Reset</h4>
+                            <p>Cancellation and stop requests wake up blocked threads cleanly and destroy all primitives within &lt; 1000ms.</p>
+                        </div>
+                    </div>
+                    <div class="test-card test-pass">
+                        <div class="test-status-badge"><i class="fa-solid fa-check-circle"></i> PASS</div>
+                        <div class="test-info">
+                            <h4>Test 10: Stress Testing Matrix</h4>
+                            <p>Runs high-stress configurations (N=3, 5, 7, 10) with varying delays to verify invariant robustness.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 6: VIVA GUIDE -->
+        <section id="tab-viva" class="tab-content">
+            <div class="content-wrapper card">
+                <h2><i class="fa-solid fa-graduation-cap"></i> Academic Viva Voce Question Bank (22 OS Questions &amp; Answers)</h2>
+                <p>Click on any question below to view the concise, college-evaluation answer:</p>
+
+                <div class="accordion" id="vivaAccordion">
+                    <!-- Populated dynamically or inline -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Confirmation Modal for Reset -->
+    <div class="modal-backdrop" id="resetModal" style="display: none;">
+        <div class="modal-box card">
+            <h3><i class="fa-solid fa-triangle-exclamation text-warning"></i> Confirm Simulation Reset</h3>
+            <p>A simulation is currently in progress. Resetting will terminate running philosopher threads, release all synchronization locks, and clear event history.</p>
+            <div class="modal-actions">
+                <button id="cancelResetBtn" class="btn btn-outline">Cancel</button>
+                <button id="confirmResetBtn" class="btn btn-danger">Yes, Reset Simulation</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>

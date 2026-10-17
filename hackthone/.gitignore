@@ -1,0 +1,29 @@
+# Build artifacts
+build/
+*.o
+*.out
+*.exe
+dining_philosophers
+test_suite
+
+# Python cache & virtual environment
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+*.egg-info/
+
+# System and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+
+# Temporary logs
+*.log
+/tmp/
